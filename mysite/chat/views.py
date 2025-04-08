@@ -6,7 +6,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth import get_user_model, authenticate, login as auth_login, logout
 from django.contrib.auth.backends import ModelBackend
-from .models import MeetingRecording, UserProfile, Meeting
+from .models import UserProfile, Meeting
 from django.views import View
 from django.http import HttpResponseBadRequest, JsonResponse, HttpResponseRedirect
 from .serializers import MeetingSerializer
