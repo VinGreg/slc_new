@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Language Class</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-image: url("{% static 'myapp/image/bg.svg' %}");
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            min-height: 100vh;
+            width: 100%;
+        }
+         @media (max-width: 768px) { /* Untuk layar HP */
+        body {
+            background-size: cover; /* Menampilkan seluruh gambar tanpa crop */
+            background-position: center;
+             background-image:  url("{% static 'myapp/image/Desain-tanpa-judul-_1_.svg' %}");
+        }
+    }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center text-white min-h-screen">
+    <!-- Header -->
+    <header class="fixed top-0 w-full bg-black/50 backdrop-blur-md py-3">
+        <div class="container mx-auto flex items-center justify-between px-4 md:px-8">
+            <h1 class="text-xl sm:text-2xl font-bold text-yellow-400">Sign Language Class</h1>
+            <nav class="flex space-x-3 sm:space-x-6">
+                <a href="{% url 'login' %}" class="text-gray-200 text-sm sm:text-base hover:text-yellow-400">Login</a>
+                <a href="{% url 'register' %}" class="bg-yellow-400 text-black px-3 py-1 sm:px-4 sm:py-2 rounded hover:bg-yellow-500 transition text-sm sm:text-base">Register</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="text-center flex-grow flex flex-col items-center justify-center px-4">
+        {% comment %} <h2 class="text-2xl sm:text-4xl font-bold mb-4 animate-pulse drop-shadow-lg">Belajar Bahasa Isyarat Online</h2> {% endcomment %}
+        {% comment %} <p class="text-lg sm:text-xl mb-6 drop-shadow-lg text-gray-300">
+            Gabung dengan komunitas kami untuk pengalaman belajar melalui konferensi video real-time.
+        </p> {% endcomment %}
+        {% comment %} <a href="{% url 'register' %}" class="bg-yellow-400 text-blue-900 px-6 py-3 rounded-lg font-semibold hover:bg-yellow-500 transition drop-shadow-lg text-sm sm:text-lg">Daftar Sekarang</a> {% endcomment %}
+    </section>
+
+    <!-- Footer -->
+    <footer class="w-full bg-black/50 text-white py-3 text-center backdrop-blur-md text-sm sm:text-base">
+        <p>&copy; 2025 Sign Language Class. All rights reserved.</p>
+    </footer>
+</body>
+</html>

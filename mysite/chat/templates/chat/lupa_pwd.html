@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+            body {
+                background-image: url("{% static 'myapp/image/bg.svg' %}");
+                background-size: cover;
+                background-position: center;
+                background-attachment: fixed;
+                background-repeat: no-repeat;
+                min-height: 100vh;
+                width: 100%;
+            }
+            @media (max-width: 425px) {
+                body {
+                    background-image: url("{% static 'myapp/image/Desain-tanpa-judul-_1_.svg' %}");
+                }
+            }
+        </style>
+    <title>Verifikasi Akun</title>
+</head>
+<body class="flex flex-col items-center justify-center text-white min-h-screen">
+    <h2 class="absolute top-20 sm:top-12 w-full text-center text-3xl sm:text-4xl font-bold text-white mb-4">
+        Verifikasi Akun
+    </h2>
+    <div class="flex items-center justify-center h-full">
+        <div class="bg-white bg-opacity-10 backdrop-blur-lg rounded-lg shadow-lg w-full max-w-md p-8">
+            <form method="POST" id="validation-form" class="w-full flex flex-col space-y-4">
+                {% csrf_token %}
+                <div>
+                    <input id="username" type="text" name="username" required placeholder="Enter Username" class="mt-1 w-full p-2 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <input id="email" type="email" name="email" required placeholder="Enter Email" class="mt-1 w-full p-2 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <input id="phone" type="text" name="phone" required placeholder="Enter Phone Number" class="mt-1 w-full p-2 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button type="submit" class="w-full py-2 mt-4 bg-blue-500 rounded-md text-white font-bold hover:bg-blue-600 focus:outline-none">
+                    Verifikasi
+                </button>
+            </form>
+            <p class="text-white mt-2">
+                <a href="{% url 'login' %}" class="text-red-400 hover:text-red-600 font-semibold">Kembali</a>
+            </p>
+        </div>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const validationForm = document.getElementById("validation-form");
+
+            validationForm.addEventListener("submit", function (event) {
+                event.preventDefault();
+                fetch("{% url 'validate_user_info' %}", {
+                    method: "POST",
+                    body: new FormData(validationForm),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = "{% url 'reset_password' %}";
+                    } else {
+                        alert(data.error);
+                    }
+                })
+                .catch(error => console.error("Error:", error));
+            });
+        });
+    </script>
+</body>
+</html>

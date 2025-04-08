@@ -1,0 +1,108 @@
+{% load static %}
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Personal Info</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://accounts.google.com/gsi/client" async defer></script>
+        <script src="https://apis.google.com/js/api.js"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+            body {
+                background-color: black; /* Hitam pekat */            
+                background-size: cover;
+                background-size: cover;
+                background-position: center;
+            }
+            .glass {
+                background: rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(10px);
+            }
+        </style>
+    </head>
+    <body class="flex items-center justify-center min-h-screen">
+        <div class="glass w-11/12 sm:w-3/4 h-auto sm:h-3/4 rounded-xl flex flex-col sm:flex-row relative">
+        
+            <!-- Sidebar (Dashboard + Logout Button) -->
+            <div class="w-full sm:w-1/3 p-8 text-white order-1 sm:order-1">
+                <div class="flex items-center mb-8">
+                    <div class="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                    <div class="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
+                    <div class="w-3 h-3 bg-green-500"></div>
+                </div>
+                <h1 class="text-3xl font-bold mb-8">Dashboard</h1>
+                <ul>
+                    <li class="mb-4 flex items-center p-2 rounded transition duration-300 cursor-pointer hover:bg-gray-700 hover:bg-opacity-50">
+                        <i class="fas fa-file-alt mr-2"></i>
+                        <a href="{% url 'join_meet' %}" class="text-white-400 hover:text-white-600 font-semibold">Bergabung Rapat</a>
+                    </li>
+                    <li class="mb-4 flex items-center p-2 rounded transition duration-300 cursor-pointer hover:bg-gray-700 hover:bg-opacity-50">
+                        <i class="fas fa-file-alt mr-2"></i>
+                        <a href="{% url 'new_meet' %}" class="text-white-400 hover:text-white-600 font-semibold">Rapat Baru</a>
+                    </li>
+                    <li class="mb-4 flex items-center p-2 rounded transition duration-300 cursor-pointer hover:bg-gray-700 hover:bg-opacity-50">
+                        <i class="fas fa-file-alt mr-2"></i>
+                        <a href="{% url 'personal_info' %}" class="text-white-400 hover:text-white-600 font-semibold">Informasi Akun</a>
+                    </li>
+                </ul>
+
+                <!-- Logout Button -->
+                <div class="w-full flex justify-start mt-4 sm:mt-8">
+                    <button id="logoutBtn" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg focus:outline-none">
+                        <i class="fas fa-sign-out-alt mr-2"></i>
+                        <span>Logout</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Personal Info Section -->
+            <div class="w-full max-w-[90%] sm:w-2/3 flex flex-col items-center sm:items-start justify-center text-white p-6 rounded-xl shadow-lg order-2 sm:order-2">
+                <div class="w-full sm:w-3/4 px-4 text-white pl-12 sm:pl-0">
+                    <!-- Profile Section -->
+                    <div class="flex flex-col sm:flex-row items-center sm:items-start mb-6 gap-4">
+                        {% if user_profile.foto %}
+                            <img src="{{ user_profile.foto.url }}" alt="Profile Photo" class="rounded-full w-24 h-24 shadow-lg border-4 border-blue-500 transition-transform duration-300 hover:scale-105">
+                        {% else %}
+                            <img src="/media/profile_pics/default.jpg" class="rounded-full w-24 h-24 shadow-lg border-4 border-gray-600 transition-transform duration-300 hover:scale-105">
+                        {% endif %}
+
+                        <div class="flex flex-col text-center sm:text-left">
+                            <span class="text-lg font-bold text-gray-300">Nama Lengkap</span>
+                            <span class="text-2xl font-bold block text-blue-400">{{ user_profile.nama_lengkap }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Email Section -->
+                    <div class="mb-6 text-center sm:text-left">
+                        <div class="flex items-center sm:items-start justify-center sm:justify-start gap-2">
+                            <i class="lucide lucide-mail text-blue-400"></i>
+                            <span class="text-lg font-bold text-gray-300">Email</span>
+                        </div>
+                        <div class="w-full max-w-[140px] sm:max-w-[280px] md:max-w-full lg:max-w-[90%] max-h-[50px] overflow-x-auto overflow-y-hidden md:overflow-hidden mx-auto sm:mx-0">
+                            <span class="text-xl font-medium text-gray-200 block whitespace-nowrap">
+                                {{ user_profile.email }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Phone Number Section -->
+                    <div class="mb-6 text-center sm:text-left">
+                        <div class="flex items-center sm:items-start justify-center sm:justify-start gap-2">
+                            <i class="lucide lucide-phone text-blue-400"></i>
+                            <span class="text-lg font-bold text-gray-300">Phone Number</span>
+                        </div>
+                        <span class="text-xl font-medium block text-gray-200">{{ user_profile.nomor_ponsel }}</span>
+                    </div>
+
+                    <!-- Edit Button -->
+                    <a href="{% url 'edit_personal_info' %}" class="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-green-500 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md">
+                        <i class="lucide lucide-edit-2"></i>
+                        Edit Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+        <script src="{% static 'js/main.js' %}"></script>
+    </body>
+</html>

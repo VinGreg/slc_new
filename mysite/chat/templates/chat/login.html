@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+            body {
+                background-image: url("{% static 'myapp/image/bg.svg' %}");
+                background-size: cover;
+                background-position: center;
+                background-attachment: fixed;
+                background-repeat: no-repeat;
+                min-height: 100vh;
+                width: 100%;
+            }
+            @media (max-width: 425px) {
+                body {
+                    background-image: url("{% static 'myapp/image/Desain-tanpa-judul-_1_.svg' %}");
+                }
+            }
+        </style>
+        <title>Halaman Login</title>
+    </head>
+    <body class="flex flex-col items-center justify-center text-white min-h-screen">
+        <h2 class="absolute top-20 sm:top-12 w-full text-center text-3xl sm:text-4xl font-bold text-white mb-4">
+            Login
+        </h2>
+        <div class="flex items-center justify-center h-full">
+            <div class="bg-white bg-opacity-10 backdrop-blur-lg rounded-lg shadow-lg w-full max-w-md p-8">
+                <form method="POST" onsubmit="return validateForm(event)" class="w-full flex flex-col space-y-4">
+                    {% csrf_token %}
+                    <div>
+                        <input id="username" type="text" name="username" required placeholder="Enter Username" class="mt-1 w-full p-2 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <p id="username-error" class="hidden text-red-500 text-sm mt-1">Invalid username format!</p>
+                    </div>
+                    <div>
+                        <input id="password" type="password" name="password" required placeholder="Enter Password" class="mt-1 w-full p-2 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <p id="password-error" class="hidden text-red-500 text-sm mt-1">Password must be at least 8 characters!</p>
+                    </div>
+                    <button type="submit" class="w-full py-2 mt-4 bg-blue-500 rounded-md text-white font-bold hover:bg-blue-600 focus:outline-none">
+                        Login
+                    </button>
+                </form>
+                <script>
+                    document.addEventListener("DOMContentLoaded", function () {
+                    const loginForm = document.querySelector("form");
+                    const usernameField = document.getElementById("username");
+                    const usernameError = document.getElementById("username-error");
+                    const passwordField = document.getElementById("password");
+                    const passwordError = document.getElementById("password-error");
+                    const successMessage = document.getElementById("success-message");
+                    const failedMessage = document.getElementById("failed-message");
+
+                    loginForm.addEventListener("submit", function (event) {
+                        event.preventDefault(); // Mencegah submit default
+
+                        // Ambil nilai input
+                        const username = usernameField.value.trim();
+                        const password = passwordField.value.trim();
+
+                        // Pola username: hanya huruf dan angka, minimal 3 karakter
+                        const usernamePattern = /^[a-zA-Z0-9]{3,}$/;
+                        const isValidUsername = usernamePattern.test(username);
+                        usernameError.classList.toggle("hidden", isValidUsername);
+
+                        // Password minimal 8 karakter
+                        const isValidPassword = password.length >= 2;
+                        passwordError.classList.toggle("hidden", isValidPassword);
+
+                        if (!isValidUsername || !isValidPassword) {
+                            failedMessage.classList.remove("hidden"); // Tampilkan pesan gagal
+                            successMessage.classList.add("hidden"); // Sembunyikan pesan sukses
+                            return;
+                        }
+
+                        // Kirim form jika valid
+                        fetch(loginForm.action, {
+                            method: "POST",
+                            body: new FormData(loginForm),
+                        })
+                            .then(response => response.text())
+                            .then(data => {
+                                if (data.includes("Invalid credentials")) {
+                                    failedMessage.classList.remove("hidden"); // Tampilkan pesan gagal
+                                    successMessage.classList.add("hidden"); // Sembunyikan pesan sukses
+                                } else {
+                                    successMessage.classList.remove("hidden");
+                                    failedMessage.classList.add("hidden");
+
+                                    // Redirect setelah 2 detik
+                                    setTimeout(() => {
+                                        window.location.href = "/dashboard/";
+                                    }, 3000);
+                                }
+                            })
+                            .catch(error => {
+                                console.error("Error:", error);
+                                failedMessage.classList.remove("hidden");
+                                successMessage.classList.add("hidden");
+                            });
+                    });
+
+                    // Sembunyikan pesan error saat user mulai mengetik
+                    usernameField.addEventListener("input", () => {
+                        usernameError.classList.add("hidden");
+                        failedMessage.classList.add("hidden");
+                    });
+
+                    passwordField.addEventListener("input", () => {
+                        passwordError.classList.add("hidden");
+                        failedMessage.classList.add("hidden");
+                    });
+                });
+
+                </script>
+
+                <button id="loginBtn" class="w-full py-2 mt-2 bg-blue-500 rounded-md text-white font-bold hover:bg-blue-600 focus:outline-none">
+                    Login with Google
+                </button>
+
+                <p class="text-white text-center mt-2">Don't have an account? 
+                    <a href="{% url 'register' %}" class="text-blue-400 hover:text-blue-600 font-semibold">Register here</a>
+                </p>
+                <p class="text-white text-center mt-2">
+                    <a href="{% url 'lupa_password' %}" class="text-red-400 hover:text-red-600 font-semibold">Lupa Password?</a>
+                </p>
+            </div>
+        </div>
+        
+        <!-- Pesan login sukses -->
+        <div id="success-message" class="hidden mt-4 p-4 bg-green-500 text-white text-center rounded-md">
+            Berhasil Login! Anda akan segera dialihkan...
+        </div>
+        <!-- Pesan login gagal -->
+        <div id="failed-message" class="hidden mt-4 p-4 bg-red-500 text-white text-center rounded-md">
+            Gagal Login! Username atau Password Salah. Silahkan Coba Lagi...
+        </div>
+
+
+
+        <script src="https://apis.google.com/js/api.js" async defer onload="gapiLoaded()"></script>
+        <script src="https://accounts.google.com/gsi/client" async defer></script>
+        <script type="text/javascript" src="{% static 'js/main.js' %}"></script>
+        
+        <footer class="w-full fixed bottom-0 bg-black bg-opacity-50 text-center py-4 text-lg sm:text-xl font-semibold text-white">
+            <p>&copy; 2025 Sign Language Class. Capstone Project K15.</p>
+        </footer>
+    </body>
+</html>

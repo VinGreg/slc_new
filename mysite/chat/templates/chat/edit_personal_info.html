@@ -1,0 +1,66 @@
+{% load static %}
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Edit Personal Info</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://accounts.google.com/gsi/client" async defer></script>
+        <script src="https://apis.google.com/js/api.js"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+            body {
+                background-color: black;
+                background-size: cover;
+                background-position: center;
+            }
+            .glass {
+                background: rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(10px);
+            }
+        </style>
+    </head>
+    <body class="flex items-center justify-center min-h-screen">
+        <div class="glass w-3/4 h-3/4 rounded-xl flex relative">
+            <div class="w-full md:w-3/4 px-4 text-white">
+                <form id="accountForm" method="POST" action="{% url 'edit_personal_info' %}" enctype="multipart/form-data" class="w-full">
+                    {% csrf_token %}
+                    <div class="flex flex-col items-center md:items-start mt-8 mb-6 gap-4">
+                        {% if user_profile.foto %}
+                            <img src="{{ user_profile.foto.url }}" alt="Profile Photo" class="rounded-full w-24 h-24 shadow-lg border-4 border-blue-500 transition-transform duration-300 hover:scale-105">
+                        {% else %}
+                            <img src="/media/profile_pics/default.jpg" class="rounded-full w-24 h-24 shadow-lg border-4 border-gray-600 transition-transform duration-300 hover:scale-105">
+                        {% endif %}
+                    </div>
+                    <div class="mb-6">
+                        <label class="text-lg font-bold text-gray-300">Nama Lengkap</label>
+                        <input type="text" name="nama_lengkap" 
+                            class="text-xl font-medium block text-gray-200 bg-transparent border-b-2 border-gray-500 focus:border-blue-400 focus:outline-none w-full text-left md:text-left" 
+                            value="{{ user_profile.nama_lengkap }}" required>
+                    </div>
+                    <div class="mb-6">
+                        <label class="text-lg font-bold text-gray-300">Email</label>
+                        <input type="email" name="email" 
+                            class="text-xl font-medium block text-gray-200 bg-transparent border-b-2 border-gray-500 focus:border-blue-400 focus:outline-none w-full" 
+                            value="{{ user_profile.email }}" required>
+                    </div>
+                    <div class="mb-6">
+                        <label class="text-lg font-bold text-gray-300">Nomor Ponsel</label>
+                        <input type="text" name="nomor_ponsel" 
+                            class="text-xl font-medium block text-gray-200 bg-transparent border-b-2 border-gray-500 focus:border-blue-400 focus:outline-none w-full" 
+                            value="{{ user_profile.nomor_ponsel }}">
+                    </div>
+                    <div class="mb-6">
+                        <label class="text-lg font-bold text-gray-300">Foto</label>
+                        <input type="file" name="foto" class="text-gray-200 w-full">
+                    </div>
+                    <button type="submit" class="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-blue-500 to-green-500 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md  mt-8">
+                        <i class="fas fa-save"></i>
+                        Simpan
+                    </button>
+                </form>
+            </div>
+        </div>
+        <script src="{% static 'js/main.js' %}"></script>
+    </body>
+</html>

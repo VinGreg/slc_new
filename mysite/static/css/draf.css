@@ -1,0 +1,122 @@
+.main-grid-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-gap: 16px;
+}
+.meeting-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Creates consistent spacing between elements */
+}
+#video-container {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 0; /* Remove any bottom margin that might create extra space */
+}
+
+.video-wrapper {
+    position: relative;
+    width: 400px;
+    margin: 0 auto;
+    background-color: #000;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#controls-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 0;
+}
+.remote-video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 25%;
+    background-color: black;
+}
+
+video {
+    border-radius: 25%;
+    background-color: black;
+}
+
+.bg-blur {
+    backdrop-filter: blur(10px);
+    background-color: rgba(0, 0, 0, 0.3);
+}
+
+.hidden {
+    display: none;
+}
+
+
+/* Video Lokal Fullscreen di belakang */
+#local-video {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: -1; /* Video lokal berada di belakang UI */
+}
+
+/* Kotak "Participants" */
+#participants-box {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 10px;
+    max-width: 320px;
+    max-height: 300px; /* Batasi tinggi agar bisa discroll */
+    overflow-y: auto; /* Tambahkan scrolling */
+    z-index: 2;
+    border-radius: 10px;
+}
+
+/* Judul "Participants" */
+#participants-box .text-white {
+    font-size: 1.2rem; /* Ukuran font judul */
+    font-weight: bold;
+}
+
+/* Remote Video Styling */
+.remote-video {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+#local-video-container {
+    position: relative;
+}
+ 
+#output-text {
+    font-size: 24px;
+    font-weight: bold;
+    color: #2c3e50;
+}
+ 
+#guide-box {
+    position: absolute; /* Kotak berada di atas video */
+    width: 336px; /* Ukuran kotak */
+    height: 336px;
+    border: 3px dashed red; /* Tampilan kotak */
+    pointer-events: none; /* Agar tidak mengganggu klik pada video */
+    visibility: hidden;
+}

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+            body {
+                background-image: url("{% static 'myapp/image/bg.svg' %}");
+                background-size: cover;
+                background-position: center;
+                background-attachment: fixed;
+                background-repeat: no-repeat;
+                min-height: 100vh;
+                width: 100%;
+            }
+            @media (max-width: 425px) {
+                body {
+                    background-image: url("{% static 'myapp/image/Desain-tanpa-judul-_1_.svg' %}");
+                }
+            }
+        </style>
+        <title>Halaman Pendaftaran</title>
+    </head>
+    <body class="flex flex-col items-center justify-center text-white min-h-screen">
+        <h2 class="absolute top-20 sm:top-12 w-full text-center text-3xl sm:text-4xl font-bold text-white mb-4">
+            Daftar
+        </h2>
+        <div class="bg-white bg-opacity-10 backdrop-blur-lg rounded-lg shadow-lg w-full max-w-md p-8">
+            <form method="POST" onsubmit="return validateForm(event)" class="w-full flex flex-col space-y-4">
+                {% csrf_token %}
+                <div>
+                    <input id="username" type="text" name="username" required 
+                        placeholder="Enter Username"
+                        class="mt-1 w-full p-2 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        pattern="[A-Za-z0-9_]{3,}"
+                        title="Username hanya boleh huruf, angka, atau underscore (_) dengan minimal 3 karakter">
+                    <p id="username-error" class="hidden text-red-500 text-sm mt-1">Format username salah! Hanya huruf, angka, dan _ dengan minimal 3 karakter.</p>
+                </div>
+
+                <div>
+                    <input id="email" type="email" name="email" required
+                        placeholder="Alamat Email"
+                        class="mt-1 w-full p-2 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <p id="email-error" class="hidden text-red-500 text-sm mt-1">Gunakan email Teknik Komputer Undip (@student.ce.undip.ac.id)</p>
+                </div>
+
+                <div>
+                    <input id="password" type="password" name="password" required 
+                        placeholder="Enter Password" minlength="8"
+                        class="mt-1 w-full p-2 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <p id="password-error" class="hidden text-red-500 text-sm mt-1">Password minimal 8 karakter!</p>
+                </div>
+
+                <div>
+                    <input id="phone" type="tel" name="phone" required
+                        placeholder="Masukkan Nomor Handphone" maxlength="12"
+                        class="mt-1 w-full p-2 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        oninput="validatePhone(this)">
+                    <p id="phone-error" class="hidden text-red-500 text-sm mt-1">Nomor hanya boleh angka (max 12 digit)</p>
+                </div>
+
+                <button type="submit" 
+                        class="w-full py-2 mt-4 bg-blue-500 rounded-md text-white font-bold hover:bg-blue-600 focus:outline-none">
+                    Daftar
+                </button>
+            </form>
+            <p class="text-center text-sm mt-1 mb-0">
+                Sudah punya akun? 
+                <a href="{% url 'login' %}" class="text-blue-400 hover:text-blue-600 font-semibold">Login di sini</a>
+            </p>
+        </div>
+        <!-- pesan status register -->
+        {% if messages %}
+            <div class="mt-0 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                {% for message in messages %}
+                    <p class="{% if message.tags %}{{ message.tags }}{% endif %} text-sm mt-1">
+                        {{ message }}
+                    </p>
+                {% endfor %}
+            </div>
+        {% endif %}
+        
+        <script src="{% static 'js/register.js' %}"></script>
+        <script src="{% static 'js/main.js' %}"></script>
+        <footer class="w-full fixed bottom-0 bg-black bg-opacity-50 text-center py-4 text-lg sm:text-xl font-semibold text-white">
+            <p>&copy; 2025 Sign Language Class. All rights reserved.</p>
+        </footer>
+    </body>
+</html>

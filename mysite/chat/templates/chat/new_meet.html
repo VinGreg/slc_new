@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create New Meeting</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body {
+            background-color: black;
+            background-size: cover;
+            background-position: center;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+    <div class="glass w-11/12 sm:w-3/4 h-auto sm:h-3/4 rounded-xl flex flex-col sm:flex-row relative">
+        <!-- Sidebar (Dashboard + Logout Button) -->
+        <div class="w-full sm:w-1/3 p-8 text-white order-1 sm:order-1">
+            <div class="flex items-center mb-8">
+                <div class="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                <div class="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
+                <div class="w-3 h-3 bg-green-500"></div>
+            </div>
+            <h1 class="text-3xl font-bold mb-8">Dashboard</h1>
+            <ul>
+                <li class="mb-4 flex items-center p-2 rounded transition duration-300 cursor-pointer hover:bg-gray-700 hover:bg-opacity-50">
+                    <i class="fas fa-file-alt mr-2"></i>
+                    <a href="{% url 'join_meet' %}" class="text-white-400 hover:text-white-600 font-semibold">Bergabung Rapat</a>
+                </li>
+                <li class="mb-4 flex items-center p-2 rounded transition duration-300 cursor-pointer hover:bg-gray-700 hover:bg-opacity-50">
+                    <i class="fas fa-file-alt mr-2"></i>
+                    <a href="{% url 'new_meet' %}" class="text-white-400 hover:text-white-600 font-semibold">Rapat Baru</a>
+                </li>
+                <li class="mb-4 flex items-center p-2 rounded transition duration-300 cursor-pointer hover:bg-gray-700 hover:bg-opacity-50">
+                    <i class="fas fa-file-alt mr-2"></i>
+                    <a href="{% url 'personal_info' %}" class="text-white-400 hover:text-white-600 font-semibold">Informasi Akun</a>
+                </li>
+            </ul>
+            <div class="w-full flex justify-start mt-4 sm:mt-8">
+                <button id="logoutBtn" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg focus:outline-none">
+                    <i class="fas fa-sign-out-alt mr-2"></i>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </div>
+        <!-- New Meet Section -->
+        <div class="w-full sm:w-2/3 flex flex-col items-center sm:items-start justify-center text-white p-6 rounded-xl shadow-lg order-2 sm:order-2">
+            <form method="POST" class="w-full max-w-lg bg-opacity-50 p-8 rounded-lg">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label for="title" class="block text-lg font-medium mb-2">Title:</label>
+                    <input type="text" id="title" name="title" required placeholder="Enter meeting title" class="w-full p-3 border border-gray-300 bg-gray-800 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="mb-4">
+                    <label for="description" class="block text-lg font-medium mb-2">Description:</label>
+                    <textarea id="description" name="description" required placeholder="Enter meeting description" class="w-full p-3 border border-gray-300 bg-gray-800 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                <div class="mb-4">
+                    <label for="start_time" class="block text-lg font-medium mb-2">Start Time:</label>
+                    <input type="datetime-local" id="start_time" name="start_time" class="w-full p-3 border border-gray-300 bg-gray-800 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="mb-4">
+                    <label for="schedule_meeting" class="block text-lg font-medium mb-2">
+                        <input type="checkbox" id="schedule_meeting" name="schedule_meeting">
+                        Schedule for later
+                    </label>
+                </div>
+                <button type="submit" class="w-full py-3 bg-gradient-to-r from-blue-500 to-green-500 text-white font-bold rounded hover:opacity-80">
+                    Create Meeting
+                </button>
+            </form>
+            {% if meeting_code %}
+                <h2 class="text-2xl font-bold mt-8">Meeting Code: {{ meeting_code }}</h2>
+                <form method="GET" action="{% url 'meeting_page' room_name=meeting_id %}">
+                    <button type="submit" class="mt-4 bg-gradient-to-r from-gray-400 to-yellow-400 text-white py-2 px-4 rounded-full hover:opacity-80">
+                        Go to Meeting
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+    <script src="{% static 'js/main.js' %}"></script>
+    
+    //untuk menampilkan pesan error jika waktu yang dipilih sudah lewat
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const form = document.querySelector("form");
+            const startTimeInput = document.getElementById("start_time");
+    
+            form.addEventListener("submit", function (event) {
+                const selectedTime = new Date(startTimeInput.value);
+                const now = new Date();
+    
+                if (!startTimeInput.value) {
+                    alert("Please select a start time.");
+                    event.preventDefault();
+                    startTimeInput.focus();
+                    return;
+                }
+    
+                if (selectedTime < now) {
+                    event.preventDefault();
+                    alert("Start time cannot be in the past. Please select a valid time.");
+                    startTimeInput.focus();
+                }
+            });
+        });
+    </script>
+    
+</body>
+</html>
