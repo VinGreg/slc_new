@@ -48,14 +48,6 @@ class Meeting(models.Model):
     def __str__(self):
         return self.title  # Display title when object is 
     
-class MeetingRecording(models.Model):
-    meeting_id = models.CharField(max_length=100)
-    recording_url = models.URLField()
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.meeting_id  # Display meeting_id when object is called
-    
 class UserProfile(models.Model):
     user = models.OneToOneField(
         CustomUser, on_delete=models.CASCADE, to_field="_id", db_column="user_id", primary_key=True, default=""
