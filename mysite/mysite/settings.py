@@ -103,6 +103,8 @@ DATABASES = {
         }
     }
 }
+MONGO_URI = "mongodb+srv://myAtlasDBUser:Vincent2002@myatlasclusteredu.jzsh9rx.mongodb.net/?retryWrites=true&w=majority&appName=myAtlasClusterEDU"
+
 
 # recording
 Q_CLUSTER = {

@@ -23,134 +23,121 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     // Google API
-    const CLIENT_ID = '591484697551-u8ag6jl4829i0uaium0mktdecvj21m5i.apps.googleusercontent.com';
-    const API_KEY = 'AIzaSyAZHa_rjbQqTCbQa8_4yrsvjBFlZsB5vDI';
-    const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+    const CLIENT_ID = '466179634693-s2gsnc5bg75iglmhrq5ajuuphufnl6a6.apps.googleusercontent.com';
+    const SCOPES = 'openid https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile';
 
     let tokenClient;
-    let gapiInited = false;
     let gisInited = false;
 
-    function gapiLoaded() {
-        gapi.load('client', initializeGapiClient);
-    }
 
-    async function initializeGapiClient() {
-        await gapi.client.init({
-            apiKey: API_KEY,
-            discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
-        });
-        gapiInited = true;
-        checkLoginStatus();
-    }
-
+    // Load Google Identity Services
     function gisLoaded() {
+        console.log("Google Identity Services loaded.");
         tokenClient = google.accounts.oauth2.initTokenClient({
             client_id: CLIENT_ID,
             scope: SCOPES,
             callback: handleAuthResponse,
         });
         gisInited = true;
+
+        // Aktifkan tombol login
+        const loginBtn = document.getElementById("loginBtn");
+        if (loginBtn) loginBtn.disabled = false;
+
+        // Update status teks
+        const statusEl = document.getElementById("googleStatus");
+        if (statusEl) statusEl.innerText = "Google Sign-In is ready!";
+
+
         checkLoginStatus();
     }
+    
 
+
+    // Cek status login dari localStorage
     function checkLoginStatus() {
-        if (gapiInited && gisInited) {
-            if (localStorage.getItem('access_token')) {
-                const loginBtn = document.getElementById('loginBtn');
-                const logoutBtn = document.getElementById('logoutBtn');
-                if (loginBtn && logoutBtn) {
-                    loginBtn.style.display = 'none';
-                    logoutBtn.style.display = 'block';
-                    document.getElementById('status').innerText = 'User is already signed in.';
-                }
-            } else {
-                const loginBtn = document.getElementById('loginBtn');
-                const logoutBtn = document.getElementById('logoutBtn');
-                if (loginBtn && logoutBtn) {
-                    loginBtn.style.display = 'block';
-                    logoutBtn.style.display = 'none';
-                    document.getElementById('status').innerText = 'User is not signed in.';
-                }
-            }
+        const accessToken = localStorage.getItem('access_token');
+        const loginBtn = document.getElementById('loginBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        if (accessToken) {
+            loginBtn?.style && (loginBtn.style.display = 'none');
+            logoutBtn?.style && (logoutBtn.style.display = 'block');
+            document.getElementById('status').innerText = 'User is already signed in.';
+        } else {
+            loginBtn?.style && (loginBtn.style.display = 'block');
+            logoutBtn?.style && (logoutBtn.style.display = 'none');
+            document.getElementById('status').innerText = 'User is not signed in.';
         }
     }
 
-    function signIn() {
+    window.signIn = function () {
+        console.log("Google Sign-In button clicked.");
         if (!gisInited) {
-            console.error("Google Identity Services not initialized.");
-            alert("Google Sign-In is not ready. Please try again later.");
+            console.error("Google Sign-In is not ready yet.");
+            alert("Google Sign in is loading. Please try again later.");
             return;
         }
         tokenClient.requestAccessToken({ prompt: 'consent' });
     }
 
     function handleAuthResponse(response) {
-    if (response && response.access_token) {
-        console.log('Access Token:', response.access_token);
-        localStorage.setItem('access_token', response.access_token);
-
-        // Ambil informasi user dari Google API
-        fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-            headers: { Authorization: `Bearer ${response.access_token}` },
-        })
-        .then(res => res.json())
-        .then(userInfo => {
-            console.log("Google User:", userInfo);
-
-            // Kirim data ke backend Django
-            fetch("/google-login-callback/", {
-                method: "POST",
-                credentials: "include",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": getCSRFToken()
-                },
-                body: JSON.stringify({
-                    email: userInfo.email,
-                    name: userInfo.name
-                })
+        if (response && response.access_token) {
+            console.log('Access Token:', response.access_token);
+            localStorage.setItem('access_token', response.access_token);
+    
+            fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+                headers: { Authorization: `Bearer ${response.access_token}` },
             })
             .then(res => res.json())
-            .then(data => {
-                console.log("Django Login Response:", data);
-                window.location.href = "/dashboard/";  // Redirect ke dashboard
+            .then(userInfo => {
+                console.log("Google User:", userInfo);
+    
+                // Kirim ke backend Django
+                fetch("/google-login-callback/", {
+                    method: "POST",
+                    credentials: "include",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": getCSRFToken()
+                    },
+                    body: JSON.stringify({
+                        email: userInfo.email,
+                        name: userInfo.name
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    console.log("Django Login Response:", data);
+                    window.location.href = "/dashboard/";
+                })
+                .catch(error => console.error("Google login callback failed:", error));
             })
-            .catch(error => console.error("Google login callback failed:", error));
-        })
-        .catch(error => console.error("Fetching Google user info failed:", error));
-    } else {
-        console.error('Login failed');
+            .catch(error => console.error("Fetching Google user info failed:", error));
+        } else {
+            console.error('Login failed');
+        }
     }
-} 
 
     function signOut() {
-        const token = localStorage.getItem('access_token'); // Cek apakah user login dengan Google
-        
-        fetch('/logout/', { method: 'POST', credentials: 'include' }) // Logout dari Django
+        const token = localStorage.getItem('access_token');
+        fetch('/logout/', { method: 'POST', credentials: 'include' })
             .then(response => response.json())
             .then(data => {
                 if (data.method === "google" && token) {
-                    // 1. Revoke token dari Google
                     google.accounts.oauth2.revoke(token, () => {
                         console.log('Google Access Token Revoked.');
                     });
-    
-                    // 2. Hapus token dari localStorage
                     localStorage.removeItem('access_token');
-    
-                    // 3. Logout dari sesi Google
                     google.accounts.id.disableAutoSelect();
                 }
-    
-                // 4. Redirect ke halaman login
                 window.location.href = "/login";
             })
             .catch(error => console.error('Logout failed:', error));
     }
 
     function logoutUser() {
-        fetch("/logout", {  // Hapus trailing slash
+        fetch("/logout", {
             method: "POST",
             credentials: "include",
             headers: {
@@ -158,12 +145,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 "Content-Type": "application/json",
             }
         })
-        .then(response => response.json())  // Pastikan response berupa JSON
+        .then(response => response.json())
         .then(data => {
             console.log("Logout response:", data);
-    
             if (data.status === "success") {
-                window.location.href = "/login";  // Redirect ke halaman login
+                window.location.href = "/login";
             } else {
                 console.error("Logout failed:", data.message);
             }
@@ -177,6 +163,9 @@ document.addEventListener('DOMContentLoaded', function() {
             ?.split('=')[1];
     }
     
+    // Button listeners
+    document.getElementById('loginBtn')?.addEventListener('click', signIn);
+    document.getElementById('logoutBtn')?.addEventListener('click', logoutUser);
 
     const loginBtn = document.getElementById('loginBtn');
     const logoutBtn = document.getElementById('logoutBtn');
@@ -189,7 +178,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     
-    
+
 
     function generateMeetingId() {
         return 'meeting-' + Math.random().toString(36).substr(2, 9);
@@ -836,11 +825,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const endMeetButton = document.getElementById("end-meet-btn");
     const endMeetForm = document.getElementById("end-meet-form");
 
-    if (!endMeetForm) {
-        console.error("Error: Form end-meet tidak ditemukan!");
-    }
-
-    if (endMeetButton) {
+    if (endMeetForm && endMeetButton) {
         endMeetButton.addEventListener("click", async function (event) {
             if (mediaRecorder && mediaRecorder.state === "recording") {
                 console.log("End Meeting ditekan saat rekaman berlangsung. Menghentikan dan menyimpan rekaman...");
@@ -852,7 +837,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
             console.log("Mengirim form untuk mengakhiri meeting...");
             setTimeout(() => {
-                if (endMeetForm) endMeetForm.submit();
+                endMeetForm.submit();
             }, 3000);
         });
     }
@@ -1061,9 +1046,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 sharePrediction.style.display = 'none';
             }
         });
-    } else {
-        console.warn('sharePredictionBtn or sharePrediction is not found in the DOM.');
-    }
+    } 
 
     if (msgBtn) {
         msgBtn.addEventListener('click', function () {
@@ -1075,6 +1058,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    const navMenu = document.getElementById('nav-menu');
+    const navbarDropdown = document.getElementById('navbar-dropdown');
+
     if (navMenu && navbarDropdown) {
         navMenu.addEventListener('click', function () {
             if (navbarDropdown.style.display === 'none') {
@@ -1085,6 +1071,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    gapiLoaded();
-    gisLoaded();
+
+    if (window.location.pathname.includes('login.html')) {
+        gisLoaded();
+
+    }
 });

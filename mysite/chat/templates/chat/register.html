@@ -29,7 +29,7 @@
             Daftar
         </h2>
         <div class="bg-white bg-opacity-10 backdrop-blur-lg rounded-lg shadow-lg w-full max-w-md p-8">
-            <form method="POST" onsubmit="return validateForm(event)" class="w-full flex flex-col space-y-4">
+            <form method="POST" class="w-full flex flex-col space-y-4">
                 {% csrf_token %}
                 <div>
                     <input id="username" type="text" name="username" required 
@@ -44,7 +44,7 @@
                     <input id="email" type="email" name="email" required
                         placeholder="Alamat Email"
                         class="mt-1 w-full p-2 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <p id="email-error" class="hidden text-red-500 text-sm mt-1">Gunakan email Teknik Komputer Undip (@student.ce.undip.ac.id)</p>
+                    <p id="email-error" class="hidden text-red-500 text-sm mt-1">Gunakan Email yang Valid!</p>
                 </div>
 
                 <div>
@@ -57,8 +57,7 @@
                 <div>
                     <input id="phone" type="tel" name="phone" required
                         placeholder="Masukkan Nomor Handphone" maxlength="12"
-                        class="mt-1 w-full p-2 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        oninput="validatePhone(this)">
+                        class="mt-1 w-full p-2 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <p id="phone-error" class="hidden text-red-500 text-sm mt-1">Nomor hanya boleh angka (max 12 digit)</p>
                 </div>
 
@@ -84,7 +83,6 @@
         {% endif %}
         
         <script src="{% static 'js/register.js' %}"></script>
-        <script src="{% static 'js/main.js' %}"></script>
         <footer class="w-full fixed bottom-0 bg-black bg-opacity-50 text-center py-4 text-lg sm:text-xl font-semibold text-white">
             <p>&copy; 2025 Sign Language Class. All rights reserved.</p>
         </footer>

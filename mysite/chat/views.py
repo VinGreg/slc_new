@@ -6,7 +6,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth import get_user_model, authenticate, login as auth_login, logout
 from django.contrib.auth.backends import ModelBackend
-from .models import UserProfile, Meeting
+from .models import UserProfile, Meeting, CustomUser as User
 from django.views import View
 from django.http import HttpResponseBadRequest, JsonResponse, HttpResponseRedirect
 from .serializers import MeetingSerializer
@@ -19,7 +19,6 @@ from django.contrib.auth.hashers import check_password
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from django.urls import reverse
-from chat.models import UserProfile, Meeting
 from .forms import MeetingForm
 from django.utils import timezone
 from datetime import timedelta
@@ -28,11 +27,10 @@ from pymongo import MongoClient  # Import MongoDB client
 
 User = get_user_model()  # Use the custom user model
 
-# # Connect to MongoDB
-client = MongoClient('mongodb+srv://myAtlasDBUser:Vincent2002@myatlasclusteredu.jzsh9rx.mongodb.net/?retryWrites=true&w=majority&appName=myAtlasClusterEDU')  # Replace with your MongoDB connection string
-db = client['ta_slc']  # Replace with your database name
-collection = db['chat_customuser']  # Replace with your collection name
-
+# MongoDB setup
+mongo_client = MongoClient(settings.MONGO_URI)
+db = mongo_client['ta_slc']
+collection = db['chat_customuser']
 # Create your views here.
 def main(request):
     return render(request, 'chat/main.html')
@@ -43,20 +41,14 @@ def login_view(request):
         username = request.POST.get('username')
         password = request.POST.get('password')
 
-        user = User.objects.filter(username=username).first()
+        user = authenticate(request, username=username, password=password)
 
-        if user and check_password(password, user.password):
-            auth_login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-
-            request.session['user_id'] = str(user._id)  # Simpan _id ke sesi
-            request.session["login_method"] = "username_password"  # Tambahkan metode login ke sesi
-            request.session.modified = True
-
-            print(f"User ditemukan: {user.username}")
-            print(f"Session ID setelah login: {request.session.session_key}")
+        if user:
+            auth_login(request, user)
+            if hasattr(user, '_id'):
+                request.session['user_id'] = str(user._id)
+            request.session['login_method'] = 'username_password'
             return redirect('dashboard')
-
-        print("User tidak ditemukan atau password salah.")
         return render(request, 'chat/login.html', {'error': 'Invalid credentials'})
 
     return render(request, 'chat/login.html')
@@ -67,45 +59,30 @@ def google_login_callback(request):
     if request.method == "POST":
         try:
             data = json.loads(request.body)
-            print("Google Callback Data:", data)
+            email = data.get("email")
 
-            google_email = data.get("email")
+            if not email:
+                return JsonResponse({"error": "Missing email"}, status=400)
 
-            if not google_email:
-                return JsonResponse({"error": "Invalid Google response: missing email"}, status=400)
-
-            # Cek di MongoDB
-            user_mongo = collection.find_one({'email': google_email})
+            user_mongo = collection.find_one({'email': email})
             if not user_mongo:
-                print(f"Login gagal: email {google_email} belum terdaftar.")
-                return JsonResponse({"error": "Email belum terdaftar. Silakan registrasi terlebih dahulu."}, status=401)
+                return JsonResponse({"error": "Email belum terdaftar."}, status=401)
 
-            # Cek juga di Django user
-            User = get_user_model()
-            user_django = User.objects.filter(email=google_email).first()
+            user_django = User.objects.filter(email=email).first()
             if not user_django:
-                print(f"Tidak ditemukan user Django untuk email: {google_email}")
                 return JsonResponse({"error": "User Django tidak ditemukan."}, status=401)
 
-            # Autentikasi user di Django
-            auth_login(request, user_django, backend='django.contrib.auth.backends.ModelBackend')
-
-            # Simpan _id MongoDB ke sesi
-            request.session["user_id"] = str(user_mongo['_id'])
+            auth_login(request, user_django)
+            request.session['user_id'] = str(user_mongo['_id'])
             request.session['login_method'] = 'google'
-            request.session.modified = True
-
-            print(f"User {google_email} berhasil login dengan Google.")
-            return JsonResponse({"message": "Login successful", "user": google_email})
+            return JsonResponse({"message": "Login successful", "user": email})
 
         except json.JSONDecodeError:
             return JsonResponse({"error": "Invalid JSON format"}, status=400)
         except Exception as e:
-            print("Google Login Error:", str(e))
             return JsonResponse({"error": str(e)}, status=500)
 
     return JsonResponse({"error": "Invalid request"}, status=400)
-
 
 # Register view
 def register(request):
@@ -136,9 +113,11 @@ def check_username(request):
     return JsonResponse({'exists': exists})
 
 def check_email(request):
-    email = request.GET.get('email', '')
-    exists = User.objects.filter(email=email).exists()
-    return JsonResponse({'exists': exists})
+    email = request.GET.get('email', None)
+    if email:
+        exists = User.objects.filter(email=email).exists()
+        return JsonResponse({'exists': exists})
+    return JsonResponse({'exists': False})
 
 # Dashboard view
 def dashboard(request):
@@ -228,13 +207,14 @@ def edit_personal_info(request):
 
     if request.method == "POST":
         user_profile.nama_lengkap = request.POST.get("nama_lengkap")
-        user_profile.email = request.POST.get("email")
+        email = request.POST.get("email")
+        if User.objects.filter(email=email).exclude(id=request.user.id).exists():
+            messages.error(request, "Email sudah digunakan")
+            return redirect("edit_personal_info")
+        user_profile.email = email
         user_profile.nomor_ponsel = request.POST.get("nomor_ponsel")
-
-        # Cek apakah ada file foto yang diunggah
         if 'foto' in request.FILES:
-            user_profile.foto = request.FILES['foto']  # ✅ Simpan file yang diunggah
-
+            user_profile.foto = request.FILES['foto']
         user_profile.save()
         return redirect('personal_info')
 
@@ -269,8 +249,11 @@ def reset_password(request):
         user = User.objects.filter(email=email).first()
         if user:
             new_password = request.POST.get('new_password')
+            if not new_password or len(new_password) < 8:
+                return render(request, 'chat/reset_password.html', {'error': 'Password harus minimal 8 karakter'})
             user.set_password(new_password)
             user.save()
+            return redirect('login')
             return redirect('login')
     return render(request, 'chat/reset_password.html')
 

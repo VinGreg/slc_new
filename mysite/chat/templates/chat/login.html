@@ -45,6 +45,18 @@
                     </button>
                 </form>
                 <script>
+                    function validateForm(event) {
+                        // Contoh validasi sederhana
+                        const username = document.getElementById("username").value.trim();
+                        const password = document.getElementById("password").value.trim();
+
+                        if (!username || !password) {
+                            alert("Username dan password tidak boleh kosong!");
+                            return false; // Mencegah form dikirim
+                        }
+
+                        return true; // Izinkan form dikirim
+                    }
                     document.addEventListener("DOMContentLoaded", function () {
                     const loginForm = document.querySelector("form");
                     const usernameField = document.getElementById("username");
@@ -113,13 +125,19 @@
                         passwordError.classList.add("hidden");
                         failedMessage.classList.add("hidden");
                     });
+
+                    
                 });
 
                 </script>
 
-                <button id="loginBtn" class="w-full py-2 mt-2 bg-blue-500 rounded-md text-white font-bold hover:bg-blue-600 focus:outline-none">
+                <button id="loginBtn" class="w-full py-2 mt-2 bg-blue-500 rounded-md text-white font-bold hover:bg-blue-600 focus:outline-none" disabled onclick="signIn()">
                     Login with Google
                 </button>
+                <!-- Status Loading Google -->
+                <p id="googleStatus" class="text-sm text-yellow-300 mt-2 text-center">
+                    Preparing Google Sign-In...
+                </p>
 
                 <p class="text-white text-center mt-2">Don't have an account? 
                     <a href="{% url 'register' %}" class="text-blue-400 hover:text-blue-600 font-semibold">Register here</a>
@@ -138,15 +156,14 @@
         <div id="failed-message" class="hidden mt-4 p-4 bg-red-500 text-white text-center rounded-md">
             Gagal Login! Username atau Password Salah. Silahkan Coba Lagi...
         </div>
-
-
-
-        <script src="https://apis.google.com/js/api.js" async defer onload="gapiLoaded()"></script>
-        <script src="https://accounts.google.com/gsi/client" async defer></script>
-        <script type="text/javascript" src="{% static 'js/main.js' %}"></script>
-        
+     
         <footer class="w-full fixed bottom-0 bg-black bg-opacity-50 text-center py-4 text-lg sm:text-xl font-semibold text-white">
             <p>&copy; 2025 Sign Language Class. Capstone Project K15.</p>
         </footer>
+
+        {% block extra_scripts %}
+            <script type="text/javascript" src="{% static 'js/main.js' %}" defer></script>
+            <script src="https://accounts.google.com/gsi/client" async defer onload="typeof gisLoaded === 'function' && gisLoaded()"></script>        {% endblock %}
+
     </body>
 </html>

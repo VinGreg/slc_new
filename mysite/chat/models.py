@@ -48,6 +48,10 @@ class Meeting(models.Model):
     def __str__(self):
         return self.title  # Display title when object is 
     
+<<<<<<< HEAD
+=======
+    
+>>>>>>> ccf8934 (Pesan commit kamu)
 class UserProfile(models.Model):
     user = models.OneToOneField(
         CustomUser, on_delete=models.CASCADE, to_field="_id", db_column="user_id", primary_key=True, default=""
