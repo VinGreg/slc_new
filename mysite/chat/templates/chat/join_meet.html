@@ -81,8 +81,8 @@
                             <p>Waktu Mulai: {{ meeting.start_time }}</p>
                             <p>Kode Meeting: {{ meeting.code }}</p>
                             <p>Dibuat oleh: {{ meeting.created_by.username }}</p>
-                            <a href="{% url 'meeting_page' room_name=meeting.id %}" class="ml-2 text-blue-400 underline">Join</a>
-                            <button class="mt-2 bg-blue-500 text-white py-2 px-4 rounded" onclick="copyInvitation('{{ meeting.title }}', '{{ meeting.start_time }}', '{{ meeting.created_by.username }}', '{{ meeting_code }}')">Bagikan Undangan</button>
+                            <a href="{% url 'meeting_page' meeting_id=meeting.id %}" class="ml-2 text-blue-400 underline">Join</a>
+                            <button class="mt-2 bg-blue-500 text-white py-2 px-4 rounded" onclick="copyInvitation('{{ meeting.title }}', '{{ meeting.start_time }}', '{{ meeting.created_by.username }}', '{{ meeting.code }}')">Bagikan Undangan</button>
                             <form method="POST" action="{% url 'delete_meeting' meeting.id %}" class="inline">
                                 {% csrf_token %}
                                 <button type="submit" class="mt-2 bg-red-500 text-white py-2 px-4 rounded">Hapus</button>

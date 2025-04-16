@@ -44,12 +44,14 @@
                             <a href="{% url 'personal_info' %}" class="text-white-400 hover:text-blue-600 font-semibold">Informasi Akun</a>
                         </li>
                     </ul>
+                    {% if user.is_authenticated %}
                     <div class="absolute bottom-8 left-8">
                         <button id="logoutBtn" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg focus:outline-none">
                             <i class="fas fa-sign-out-alt mr-2"></i>
                             <span>Logout</span>
                         </button>
                     </div>
+                    {% endif %}
                 </div>
                 <div class="w-full md:w-2/3 flex flex-col items-center justify-center text-white p-12 ml-auto overflow-y-auto max-h-screen">
                     <h2 class="mt-8 text-xl sm:text-2xl font-bold text-white mb-4">

@@ -53,7 +53,6 @@ def login_view(request):
 
     return render(request, 'chat/login.html')
 
-
 @csrf_exempt  
 def google_login_callback(request):
     if request.method == "POST":
@@ -64,14 +63,17 @@ def google_login_callback(request):
             if not email:
                 return JsonResponse({"error": "Missing email"}, status=400)
 
+            # Cek apakah email terdaftar di MongoDB
             user_mongo = collection.find_one({'email': email})
             if not user_mongo:
-                return JsonResponse({"error": "Email belum terdaftar."}, status=401)
+                return JsonResponse({"error": "Email belum terdaftar di sistem. Silakan daftar manual terlebih dahulu."}, status=401)
 
+            # Cek juga apakah email ada di Django
             user_django = User.objects.filter(email=email).first()
             if not user_django:
-                return JsonResponse({"error": "User Django tidak ditemukan."}, status=401)
+                return JsonResponse({"error": "User tidak ditemukan di sistem Django."}, status=401)
 
+            # Login jika keduanya cocok
             auth_login(request, user_django)
             request.session['user_id'] = str(user_mongo['_id'])
             request.session['login_method'] = 'google'
@@ -80,9 +82,11 @@ def google_login_callback(request):
         except json.JSONDecodeError:
             return JsonResponse({"error": "Invalid JSON format"}, status=400)
         except Exception as e:
+            traceback.print_exc()  # Tambahan untuk debugging
             return JsonResponse({"error": str(e)}, status=500)
 
     return JsonResponse({"error": "Invalid request"}, status=400)
+
 
 # Register view
 def register(request):
@@ -90,6 +94,7 @@ def register(request):
         username = request.POST['username']
         email = request.POST['email']
         password = request.POST['password']
+        phone = request.POST.get('phone')
 
         if User.objects.filter(username=username).exists():
             messages.error(request, 'Username sudah digunakan')
@@ -99,9 +104,17 @@ def register(request):
             messages.error(request, 'Email sudah digunakan')
             return redirect('register')
 
-        user = User(username=username, email=email)
+        user = User(username=username, email=email,user_number=phone)
         user.set_password(password)
         user.save()
+
+        # Buat UserProfile terkait
+        UserProfile.objects.create(
+            user=user,
+            nama_lengkap=username,  # Default nama lengkap
+            email=email,
+            nomor_ponsel=phone
+        )
 
         messages.success(request, 'Akun berhasil dibuat! Silakan login.')
         return redirect('login')
@@ -160,7 +173,7 @@ def join_meet(request):
             return render(request, 'chat/join_meet.html', {'error_message': 'Meeting Code is required'})
         try:
             meeting = Meeting.objects.get(code=meeting_code)
-            return redirect('meeting_page', room_name=meeting.id)
+            return redirect('meeting_page', meeting_id=meeting.id)
         except Meeting.DoesNotExist:
             return render(request, 'chat/join_meet.html', {'error_message': 'Meeting not found'})
         
@@ -182,11 +195,11 @@ def delete_meeting(request, meeting_id):
     return render(request, 'chat/delete_meeting.html', {'meeting': meeting})
 
 # Meeting page view
-def meeting_page(request, room_name):
-    if not room_name or not ObjectId.is_valid(room_name):
+def meeting_page(request, meeting_id):
+    if not meeting_id or not ObjectId.is_valid(meeting_id):
         return HttpResponseBadRequest("Invalid meeting ID")
     try:
-        meeting = Meeting.objects.get(id=room_name)
+        meeting = Meeting.objects.get(id=meeting_id)
         participants = User.objects.filter(meeting=meeting)  # Assuming a relationship exists
         return render(request, 'chat/meeting_page.html', {'meeting': meeting, 'participants': participants})
     except Meeting.DoesNotExist:

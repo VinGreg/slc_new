@@ -5,7 +5,9 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <script src="https://cdn.tailwindcss.com"></script>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <script src="https://accounts.google.com/gsi/client" async defer></script>
+        <script src="https://apis.google.com/js/api.js"></script>
+        <p id="status" class="text-sm text-yellow-300 mt-2 text-center" style="display: none;"></p>
         <style>
             body {
                 background-image: url("{% static 'myapp/image/bg.svg' %}");
@@ -102,10 +104,10 @@
                                     successMessage.classList.remove("hidden");
                                     failedMessage.classList.add("hidden");
 
-                                    // Redirect setelah 2 detik
+                                    // Redirect setelah 1 detik
                                     setTimeout(() => {
                                         window.location.href = "/dashboard/";
-                                    }, 3000);
+                                    }, 1000);
                                 }
                             })
                             .catch(error => {
@@ -138,6 +140,7 @@
                 <p id="googleStatus" class="text-sm text-yellow-300 mt-2 text-center">
                     Preparing Google Sign-In...
                 </p>
+                
 
                 <p class="text-white text-center mt-2">Don't have an account? 
                     <a href="{% url 'register' %}" class="text-blue-400 hover:text-blue-600 font-semibold">Register here</a>
@@ -161,9 +164,7 @@
             <p>&copy; 2025 Sign Language Class. Capstone Project K15.</p>
         </footer>
 
-        {% block extra_scripts %}
-            <script type="text/javascript" src="{% static 'js/main.js' %}" defer></script>
-            <script src="https://accounts.google.com/gsi/client" async defer onload="typeof gisLoaded === 'function' && gisLoaded()"></script>        {% endblock %}
-
+        <script type="text/javascript" src="{% static 'js/main.js' %}" defer></script>
+        
     </body>
 </html>

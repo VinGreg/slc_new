@@ -21,147 +21,12 @@ document.addEventListener('DOMContentLoaded', function() {
     var webSocket;
     var meetingId;
 
-
-    // Google API
-    const CLIENT_ID = '466179634693-s2gsnc5bg75iglmhrq5ajuuphufnl6a6.apps.googleusercontent.com';
-    const SCOPES = 'openid https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile';
-
-    let tokenClient;
-    let gisInited = false;
-
-
-    // Load Google Identity Services
-    function gisLoaded() {
-        console.log("Google Identity Services loaded.");
-        tokenClient = google.accounts.oauth2.initTokenClient({
-            client_id: CLIENT_ID,
-            scope: SCOPES,
-            callback: handleAuthResponse,
-        });
-        gisInited = true;
-
-        // Aktifkan tombol login
-        const loginBtn = document.getElementById("loginBtn");
-        if (loginBtn) loginBtn.disabled = false;
-
-        // Update status teks
-        const statusEl = document.getElementById("googleStatus");
-        if (statusEl) statusEl.innerText = "Google Sign-In is ready!";
-
-
-        checkLoginStatus();
+    if (typeof google !== 'undefined' && google.accounts) {
+        gisLoaded();
+    } else {
+        console.error("Google Identity Services SDK not loaded.");
     }
     
-
-
-    // Cek status login dari localStorage
-    function checkLoginStatus() {
-        const accessToken = localStorage.getItem('access_token');
-        const loginBtn = document.getElementById('loginBtn');
-        const logoutBtn = document.getElementById('logoutBtn');
-
-        if (accessToken) {
-            loginBtn?.style && (loginBtn.style.display = 'none');
-            logoutBtn?.style && (logoutBtn.style.display = 'block');
-            document.getElementById('status').innerText = 'User is already signed in.';
-        } else {
-            loginBtn?.style && (loginBtn.style.display = 'block');
-            logoutBtn?.style && (logoutBtn.style.display = 'none');
-            document.getElementById('status').innerText = 'User is not signed in.';
-        }
-    }
-
-    window.signIn = function () {
-        console.log("Google Sign-In button clicked.");
-        if (!gisInited) {
-            console.error("Google Sign-In is not ready yet.");
-            alert("Google Sign in is loading. Please try again later.");
-            return;
-        }
-        tokenClient.requestAccessToken({ prompt: 'consent' });
-    }
-
-    function handleAuthResponse(response) {
-        if (response && response.access_token) {
-            console.log('Access Token:', response.access_token);
-            localStorage.setItem('access_token', response.access_token);
-    
-            fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-                headers: { Authorization: `Bearer ${response.access_token}` },
-            })
-            .then(res => res.json())
-            .then(userInfo => {
-                console.log("Google User:", userInfo);
-    
-                // Kirim ke backend Django
-                fetch("/google-login-callback/", {
-                    method: "POST",
-                    credentials: "include",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRFToken": getCSRFToken()
-                    },
-                    body: JSON.stringify({
-                        email: userInfo.email,
-                        name: userInfo.name
-                    })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    console.log("Django Login Response:", data);
-                    window.location.href = "/dashboard/";
-                })
-                .catch(error => console.error("Google login callback failed:", error));
-            })
-            .catch(error => console.error("Fetching Google user info failed:", error));
-        } else {
-            console.error('Login failed');
-        }
-    }
-
-    function signOut() {
-        const token = localStorage.getItem('access_token');
-        fetch('/logout/', { method: 'POST', credentials: 'include' })
-            .then(response => response.json())
-            .then(data => {
-                if (data.method === "google" && token) {
-                    google.accounts.oauth2.revoke(token, () => {
-                        console.log('Google Access Token Revoked.');
-                    });
-                    localStorage.removeItem('access_token');
-                    google.accounts.id.disableAutoSelect();
-                }
-                window.location.href = "/login";
-            })
-            .catch(error => console.error('Logout failed:', error));
-    }
-
-    function logoutUser() {
-        fetch("/logout", {
-            method: "POST",
-            credentials: "include",
-            headers: {
-                "X-CSRFToken": getCSRFToken(),
-                "Content-Type": "application/json",
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log("Logout response:", data);
-            if (data.status === "success") {
-                window.location.href = "/login";
-            } else {
-                console.error("Logout failed:", data.message);
-            }
-        })
-        .catch(error => console.error("Logout failed:", error));
-    }
-    
-    function getCSRFToken() {
-        return document.cookie.split('; ')
-            .find(row => row.startsWith('csrftoken='))
-            ?.split('=')[1];
-    }
     
     // Button listeners
     document.getElementById('loginBtn')?.addEventListener('click', signIn);
@@ -177,7 +42,7 @@ document.addEventListener('DOMContentLoaded', function() {
         logoutBtn.addEventListener('click', logoutUser);
     }
 
-    
+    gisLoaded();
 
 
     function generateMeetingId() {
@@ -212,18 +77,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 wsStart = 'wss://';
             }
 
-            var endpoint = wsStart + loc.host + loc.pathname;
-            console.log('Connecting to:', endpoint);
+            let meetingId = window.location.pathname.split('/').filter(Boolean).slice(-1)[0];
 
-            webSocket = new WebSocket(endpoint);
+    // Pastikan meetingId valid
+    if (!meetingId || meetingId === '') {
+        console.error('Meeting ID tidak valid!');
+        return;
+    }
+
+    const endpoint = `${wsStart}${loc.host}/ws/meeting/${meetingId}/`;
+    console.log('Connecting to:', endpoint);
+
+    webSocket = new WebSocket(endpoint);
 
             webSocket.addEventListener('open', function(e) {
                 console.log('Connection opened:', e);
                 sendSignal('new-peer', {});
-                // Set the meetingId when the connection is opened
-                meetingId = generateMeetingId();
-                console.log('Meeting ID:', meetingId);
             });
+
             webSocket.addEventListener('message', webSocketOnMessage);
             webSocket.addEventListener('close', function(e) {
                 console.log('Connection Closed!:', e);
@@ -369,10 +240,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (btnToggleAudio) {
                     btnToggleAudio.addEventListener('click', function() {
                         audioTracks[0].enabled = !audioTracks[0].enabled;
-                        btnToggleAudio.innerHTML= `<i id="icon-audio" class="fas fa-microphone-slash text-red-400 text-2xl"></i>`;
+                        btnToggleAudio.innerHTML= `<i id="icon-audio" class="fas fa-microphone-slash text-red-400 text-sm"></i>`;
                         
                         if (audioTracks[0].enabled) {
-                            btnToggleAudio.innerHTML= `<i id="icon-audio" class="fas fa-microphone text-yellow-400 text-2xl"></i>`;
+                            btnToggleAudio.innerHTML= `<i id="icon-audio" class="fas fa-microphone text-yellow-400 text-sm"></i>`;
                             return;
                         }
                     });
@@ -383,8 +254,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         const videoTracks = localStream.getVideoTracks();
                         videoTracks[0].enabled = !videoTracks[0].enabled;
                         btnToggleVideo.innerHTML = videoTracks[0].enabled ?
-                            `<i id="icon-video" class="fas fa-video text-green-400 text-2xl"></i>` :
-                            `<i id="icon-video" class="fas fa-video-slash text-red-400 text-2xl"></i>`;
+                            `<i id="icon-video" class="fas fa-video text-green-400 text-sm"></i>` :
+                            `<i id="icon-video" class="fas fa-video-slash text-red-400 text-sm"></i>`;
                     });
                 }
             })
@@ -709,20 +580,28 @@ document.addEventListener('DOMContentLoaded', function() {
     
         // Hentikan berbagi layar saat pengguna berhenti berbagi
         screenStream.getVideoTracks()[0].addEventListener('ended', () => {
+            console.log("Berbagi layar dihentikan, mengembalikan video lokal...");
+
             // Kembalikan stream video asli
             navigator.mediaDevices.getUserMedia({ video: true, audio: true })
                 .then(stream => {
                     localStream = stream;
                     localVideo.srcObject = localStream;
-    
                     for (let peerUsername in mapPeers) {
                         let peer = mapPeers[peerUsername][0];
                         let sender = peer.getSenders().find(s => s.track.kind === 'video');
                         sender.replaceTrack(localStream.getVideoTracks()[0]);
                     }
-    
+
                     // Kembalikan status awal kamera
                     localStream.getVideoTracks()[0].enabled = initialVideoEnabled;
+
+                    // Pastikan elemen video lokal kembali menjadi utama
+                    document.getElementById('local-video-wrapper').style.display = 'block';
+                    const screenVideo = document.getElementById('screen-video');
+                    if (screenVideo) {
+                        screenVideo.style.display = 'none';
+                    }
                 })
                 .catch(error => {
                     console.error("Gagal mengembalikan stream video asli:", error);
@@ -741,11 +620,11 @@ document.addEventListener('DOMContentLoaded', function() {
             if (mediaRecorder && mediaRecorder.state === 'recording') {
                 console.log("Menghentikan rekaman...");
                 await stopRecordingAndSave(); // Pastikan rekaman dihentikan dengan benar sebelum reset tombol
-                recordButton.innerHTML = '<i class="fas fa-record-vinyl text-red-400 text-2xl"></i>';
+                recordButton.innerHTML = '<i class="fas fa-record-vinyl text-red-400 text-sm"></i>';
             } else {
                 console.log("Memulai rekaman...");
                 await startRecording();
-                recordButton.innerHTML = '<i class="fas fa-stop text-red-400 text-2xl"></i>';
+                recordButton.innerHTML = '<i class="fas fa-stop text-red-400 text-sm"></i>';
             }
         });
 
@@ -879,6 +758,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let currentPrediction = "";
         let lastPrediction = "";
         let lastPredictionTime = 0;
+        let deleting = false; // Status penghapusan
 
         const classLabels = [
             'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 
@@ -936,13 +816,24 @@ document.addEventListener('DOMContentLoaded', function() {
                     const now = Date.now();
 
                     if (predictedLabel === "DELETE") {
-                        currentPrediction= "DELETE";
-                        if (predictedWords.length > 0 && now - lastPredictionTime >= 2000) {
-                            predictedWords.pop();
-                            lastPredictionTime = now;
+                        if (!deleting && predictedWords.length > 0) {
+                            deleting = true; // Mulai proses penghapusan
+                            let tempWord = predictedWords.slice(0, -1);
+                            let deletingChar = predictedWords[predictedWords.length - 1];
+    
+                            // Tampilkan huruf yang akan dihapus dalam warna merah
+                            outputText.innerHTML = `Word: ${tempWord}<span style="color: red;">${deletingChar}</span>`;
+    
+                            setTimeout(() => {
+                                // Jika pengguna tetap dalam mode DELETE selama 2 detik, hapus huruf
+                                if (deleting) {
+                                    predictedWords = tempWord;
+                                    outputText.innerHTML = `Word: ${predictedWords.join("")}`;
+                                    deleting = false;
+                                }
+                            }, 2000);
                         }
-                        lastPrediction = "";
-                        currentPrediction = "";
+                        return;
                     } else if (predictedLabel === "SPACE") {
                         if (predictedWords.length > 0 && predictedWords[predictedWords.length - 1] !== " " && now - lastPredictionTime >= 2000) {
                             predictedWords.pop();
@@ -970,11 +861,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     // Update display to show the current letter being recognized
                     let displayText = predictedWords.join("");
-                    if (currentPrediction) {
-                        displayText += currentPrediction;
-                    }
 
-                    outputText.innerText = "Word: " + displayText;
+                    outputText.innerHTML = `Word: ${displayText}<span style="color: gold;">${currentPrediction}</span>`;
 
                     sendSignal("prediction", { prediction: displayText });
                     tf.dispose(inputTensor); // Dispose tensors to free memory
@@ -993,7 +881,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 await loadModel();
                 isPredicting = true;
                 console.log("Prediction started...");
-                btnPredict.innerHTML = '<i class="fas fa-hand text-white text-2xl"></i>';
+                btnPredict.innerHTML = '<i class="fas fa-hand text-white text-sm"></i>';
                 guideBox.style.visibility = 'visible';
                 const predictLoop = async () => {
                     if (!isPredicting) return; // Stop if prediction is turned
@@ -1006,7 +894,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Hentikan prediksi
                 isPredicting = false;
                 outputText.innerText = "";
-                btnPredict.innerHTML = '<i class="fas fa-hand text-grey text-2xl"></i>';
+                btnPredict.innerHTML = '<i class="fas fa-hand text-grey text-sm"></i>';
                 guideBox.style.visibility = 'hidden';
                 console.log("Prediction stopped.");
                 predictedWords= [];
@@ -1048,16 +936,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     } 
 
-    if (msgBtn) {
-        msgBtn.addEventListener('click', function () {
-            if (chat.style.display === 'none') {
-                chat.style.display = 'block';
-            } else {
-                chat.style.display = 'none';
-            }
-        });
-    }
-
     const navMenu = document.getElementById('nav-menu');
     const navbarDropdown = document.getElementById('navbar-dropdown');
 
@@ -1072,8 +950,174 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
 
-    if (window.location.pathname.includes('login.html')) {
-        gisLoaded();
+    // if (window.location.pathname.includes('login')) {
+    //     gisLoaded();
 
-    }
+    // }
+    
 });
+
+// Google API
+const CLIENT_ID = '466179634693-s2gsnc5bg75iglmhrq5ajuuphufnl6a6.apps.googleusercontent.com';
+const SCOPES = 'openid https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile';
+
+let tokenClient;
+let gisInited = false;
+
+function gisLoaded() {
+    if (typeof google === 'undefined' || !google.accounts) {
+        console.error("Google Identity Services SDK not loaded.");
+        const statusEl = document.getElementById("googleStatus");
+        if (statusEl) statusEl.innerText = "Failed to load Google Sign-In.";
+        return;
+    }
+    console.log("Google Identity Services loaded.");
+    tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        callback: handleAuthResponse,
+    });
+    gisInited = true;
+
+    // Aktifkan tombol login
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const statusEl = document.getElementById("googleStatus");
+    if (loginBtn) {
+        loginBtn.disabled = false;
+        console.log("Login button enabled.");
+    }
+
+    if (statusEl) {
+        statusEl.innerText = "Google Sign-In is ready!";
+        console.log("Google Sign-In status updated.");
+    }
+
+    if (logoutBtn) {
+        console.log("Logout button found in DOM.");
+    }
+
+    if (statusEl) {
+        statusEl.innerText = "Google Sign-In is ready!";
+        console.log("Google Sign-In status updated.");
+    }
+    checkLoginStatus();
+}
+
+// Cek status login dari localStorage
+function checkLoginStatus() {
+    const accessToken = localStorage.getItem('access_token');
+    const loginBtn = document.getElementById('loginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    
+
+    if (accessToken) {
+        if (loginBtn) loginBtn.style.display = 'none';
+        if (logoutBtn) logoutBtn.style.display = 'block';
+        
+    } else {
+        if (loginBtn) loginBtn.style.display = 'block';
+        if (logoutBtn) logoutBtn.style.display = 'none';
+        
+    }
+
+    if (logoutBtn) {
+        console.log("Logout button found in DOM.");
+        console.log("Logout button visibility:", window.getComputedStyle(logoutBtn).display);
+        logoutBtn.style.display = 'block'; // Paksa tombol Logout terlihat untuk debugging
+        console.log("Logout button updated display:", window.getComputedStyle(logoutBtn).display);
+    } 
+}
+
+window.signIn = function () {
+    console.log("Google Sign-In button clicked.");
+    if (!gisInited) {
+        console.error("Google Sign-In is not ready yet.");
+        alert("Google Sign in is loading. Please try again later.");
+        return;
+    }
+    tokenClient.requestAccessToken({ prompt: 'consent' });
+}
+
+function signOut() {
+    const token = localStorage.getItem('access_token');
+    fetch('/logout/', { method: 'POST', credentials: 'include' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.method === "google" && token) {
+                google.accounts.oauth2.revoke(token, () => {
+                    console.log('Google Access Token Revoked.');
+                });
+                localStorage.removeItem('access_token');
+                google.accounts.id.disableAutoSelect();
+            }
+            window.location.href = "/login";
+        })
+        .catch(error => console.error('Logout failed:', error));
+}
+
+function logoutUser() {
+    fetch("/logout", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+            "X-CSRFToken": getCSRFToken(),
+            "Content-Type": "application/json",
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log("Logout response:", data);
+        if (data.status === "success") {
+            localStorage.removeItem('access_token');
+            window.location.href = "/login";
+        } else {
+            console.error("Logout failed:", data.message);
+        }
+    })
+    .catch(error => console.error("Logout failed:", error));
+}
+
+function handleAuthResponse(response) {
+    if (response && response.access_token) {
+        console.log('Access Token:', response.access_token);
+        localStorage.setItem('access_token', response.access_token);
+
+        fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+            headers: { Authorization: `Bearer ${response.access_token}` },
+        })
+        .then(res => res.json())
+        .then(userInfo => {
+            console.log("Google User:", userInfo);
+
+            // Kirim ke backend Django
+            fetch("/google-login-callback/", {
+                method: "POST",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCSRFToken()
+                },
+                body: JSON.stringify({
+                    email: userInfo.email,
+                    name: userInfo.name
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log("Django Login Response:", data);
+                window.location.href = "/dashboard/";
+            })
+            .catch(error => console.error("Google login callback failed:", error));
+        })
+        .catch(error => console.error("Fetching Google user info failed:", error));
+    } else {
+        console.error('Login failed');
+    }
+}
+
+function getCSRFToken() {
+    return document.cookie.split('; ')
+        .find(row => row.startsWith('csrftoken='))
+        ?.split('=')[1];
+}

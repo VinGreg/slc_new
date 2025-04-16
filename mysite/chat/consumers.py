@@ -3,8 +3,8 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        self.room_name = self.scope['url_route']['kwargs']['room_name']
-        self.room_group_name = f'chat_{self.room_name}'
+        self.meeting_id = self.scope['url_route']['kwargs']['meeting_id']
+        self.room_group_name = f'chat_{self.meeting_id}'
         
         await self.channel_layer.group_add(
             self.room_group_name,
@@ -12,7 +12,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
         
         await self.accept()
-        print(f"WebSocket connected to room: {self.room_name}")
+        print(f"WebSocket connected to room: {self.meeting_id}")
     
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(
@@ -20,7 +20,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )   
         
-        print('Disconnected')
+        print(f"WebSocket disconnected from meeting ID: {self.meeting_id}")
     
     async def receive(self, text_data):
         receive_dict= json.loads(text_data)
