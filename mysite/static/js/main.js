@@ -948,13 +948,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    
-
-    // if (window.location.pathname.includes('login')) {
-    //     gisLoaded();
-
-    // }
-    
+        
 });
 
 // Google API
