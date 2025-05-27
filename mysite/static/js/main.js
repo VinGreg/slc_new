@@ -179,39 +179,21 @@ document.addEventListener('DOMContentLoaded', function() {
         if (action == 'screen-share') {
             let peer = mapPeers[peerUsername][0];
             let remoteScreenStream = new MediaStream();
-
-            // Find the screen track sent by the peer
+        
+            // Cari track layar yang dikirim oleh peer
             peer.getReceivers().forEach(receiver => {
                 if (receiver.track.kind === 'video') {
                     remoteScreenStream.addTrack(receiver.track);
                 }
             });
-
-            // Create or update the screen video element
-            let screenVideo = document.getElementById('screen-video');
-            if (!screenVideo) {
-                screenVideo = document.createElement('video');
-                screenVideo.id = 'screen-video';
-                screenVideo.autoplay = true;
-                screenVideo.playsInline = true;
-                screenVideo.classList.add('w-full', 'h-full', 'object-cover');
-                document.getElementById('video-container').appendChild(screenVideo);
-            }
-            screenVideo.srcObject = remoteScreenStream;
-
-            // Hide the local video and show the screen video
-            document.getElementById('local-video-wrapper').style.display = 'none';
-            screenVideo.style.display = 'block';
         }
-
+        
+    
         if (action == 'stop-screen-share') {
-            let screenVideo = document.getElementById('screen-video');
+            let screenVideo = document.getElementById(`screen-video-${peerUsername}`);
             if (screenVideo) {
                 screenVideo.remove();
             }
-
-            // Show the local video again
-            document.getElementById('local-video-wrapper').style.display = 'block';
         }
     }
 
@@ -580,28 +562,20 @@ document.addEventListener('DOMContentLoaded', function() {
     
         // Hentikan berbagi layar saat pengguna berhenti berbagi
         screenStream.getVideoTracks()[0].addEventListener('ended', () => {
-            console.log("Berbagi layar dihentikan, mengembalikan video lokal...");
-
             // Kembalikan stream video asli
             navigator.mediaDevices.getUserMedia({ video: true, audio: true })
                 .then(stream => {
                     localStream = stream;
                     localVideo.srcObject = localStream;
+    
                     for (let peerUsername in mapPeers) {
                         let peer = mapPeers[peerUsername][0];
                         let sender = peer.getSenders().find(s => s.track.kind === 'video');
                         sender.replaceTrack(localStream.getVideoTracks()[0]);
                     }
-
+    
                     // Kembalikan status awal kamera
                     localStream.getVideoTracks()[0].enabled = initialVideoEnabled;
-
-                    // Pastikan elemen video lokal kembali menjadi utama
-                    document.getElementById('local-video-wrapper').style.display = 'block';
-                    const screenVideo = document.getElementById('screen-video');
-                    if (screenVideo) {
-                        screenVideo.style.display = 'none';
-                    }
                 })
                 .catch(error => {
                     console.error("Gagal mengembalikan stream video asli:", error);
