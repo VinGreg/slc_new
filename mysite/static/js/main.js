@@ -257,21 +257,30 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function sendMsgOnClick() {
-        var message= msgInput.value;
-        var li= document.createElement('li');
+        var message = msgInput.value;
+        var li = document.createElement('li');
 
-        li.appendChild(document.createTextNode('Me: '+ message));
+        // Pisahkan username dan pesan
+        var usernameSpan = document.createElement('span');
+        usernameSpan.classList.add('username'); // Tambahkan kelas untuk username
+        usernameSpan.textContent = 'Me: ';
+
+        var messageSpan = document.createElement('span');
+        messageSpan.textContent = message;
+
+        li.appendChild(usernameSpan);
+        li.appendChild(messageSpan);
         msgList.appendChild(li);
 
-        var dataChannels= getDataChannels();
+        var dataChannels = getDataChannels();
 
-        message= username+ ': '+ message;
+        message = username + ': ' + message;
 
-        for(index in dataChannels) {
+        for (index in dataChannels) {
             dataChannels[index].send(message);
         }
 
-        msgInput.value= '';
+        msgInput.value = '';
     }
 
     function sendSignal(action, message) {
@@ -406,8 +415,21 @@ document.addEventListener('DOMContentLoaded', function() {
     function dcOnMessage(event) {
         var message = event.data;
 
+        // Pisahkan username dan pesan
+        var username = message.split(': ')[0];
+        var userMessage = message.split(': ').slice(1).join(': ');
+
         var li = document.createElement('li');
-        li.appendChild(document.createTextNode(message));
+
+        var usernameSpan = document.createElement('span');
+        usernameSpan.classList.add('username'); // Tambahkan kelas untuk username
+        usernameSpan.textContent = username + ': ';
+
+        var messageSpan = document.createElement('span');
+        messageSpan.textContent = userMessage;
+
+        li.appendChild(usernameSpan);
+        li.appendChild(messageSpan);
         messageList.appendChild(li);
     }
 

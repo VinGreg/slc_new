@@ -132,3 +132,18 @@
         display: none;
     }
 }
+/* Atur warna default untuk teks di dalam #message-list */
+#message-list {
+    color: white; /* Warna default untuk teks */
+}
+
+/* Atur warna khusus untuk username */
+#message-list li span.username {
+    color: yellow;
+    font-weight: bold;
+}
+
+/* Atur warna untuk pesan */
+#message-list li span {
+    color: white;
+}
