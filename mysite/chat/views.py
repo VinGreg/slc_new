@@ -221,13 +221,14 @@ def edit_personal_info(request):
     if request.method == "POST":
         user_profile.nama_lengkap = request.POST.get("nama_lengkap")
         email = request.POST.get("email")
-        if User.objects.filter(email=email).exclude(id=request.user.id).exists():
+        if User.objects.filter(email=email).exclude(_id=request.user._id).exists():
             messages.error(request, "Email sudah digunakan")
             return redirect("edit_personal_info")
         user_profile.email = email
         user_profile.nomor_ponsel = request.POST.get("nomor_ponsel")
         if 'foto' in request.FILES:
             user_profile.foto = request.FILES['foto']
+            request.user.save(user_photo=request.FILES['foto'])
         user_profile.save()
         return redirect('personal_info')
 

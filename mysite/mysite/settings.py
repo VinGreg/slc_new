@@ -103,6 +103,7 @@ DATABASES = {
         }
     }
 }
+MONGO_DB_NAME = 'ta_slc'
 MONGO_URI = "mongodb+srv://myAtlasDBUser:Vincent2002@myatlasclusteredu.jzsh9rx.mongodb.net/?retryWrites=true&w=majority&appName=myAtlasClusterEDU"
 
 

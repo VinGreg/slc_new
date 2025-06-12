@@ -4,7 +4,11 @@ from django.contrib.auth.models import AbstractUser
 from datetime import timedelta
 from django.utils import timezone
 from bson import ObjectId
+from pymongo import MongoClient
+from django.conf import settings
+from gridfs import GridFS
 import uuid
+import base64
 
 # Create your models here.
 
@@ -20,12 +24,32 @@ class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
     user_fullname = models.CharField(max_length=100)
     user_number = models.CharField(max_length=20, blank=True, null=True)
-    user_photo = models.ImageField(upload_to='photos/', blank=True, null=True)
+    user_photo = models.CharField(max_length=255, blank=True, null=True)  # Simpan ID file dari MongoDB
+
+    def save_user_photo_to_mongo(self, photo_file):
+        """Simpan foto ke MongoDB dan simpan ID-nya."""
+        client = MongoClient(settings.MONGO_URI)
+        db = client[settings.MONGO_DB_NAME]
+        fs = GridFS(db)
+        file_id = fs.put(photo_file, filename=f"{self.username}_photo")
+        client.close()
+        return str(file_id)
 
     def save(self, *args, **kwargs):
-        if 'update_fields' in kwargs and 'last_login' in kwargs['update_fields']:
-            kwargs['update_fields'].remove('last_login')
+        if 'user_photo' in kwargs:
+            photo_file = kwargs.pop('user_photo')
+            self.user_photo = self.save_user_photo_to_mongo(photo_file)
         super().save(*args, **kwargs)
+    def get_user_photo_from_mongo(self):
+        """Ambil foto dari MongoDB berdasarkan ID."""
+        if not self.user_photo:
+            return None
+        client = MongoClient(settings.MONGO_URI)
+        db = client[settings.MONGO_DB_NAME]
+        fs = GridFS(db)
+        file = fs.get(ObjectId(self.user_photo))
+        client.close()
+        return base64.b64encode(file.read()).decode('utf-8')  # Kembalikan konten file
 
 class Meeting(models.Model):
     id = models.CharField(
@@ -55,7 +79,7 @@ class UserProfile(models.Model):
     nama_lengkap = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
     nomor_ponsel = models.CharField(max_length=20, blank=True, null=True)
-    foto = models.ImageField(upload_to='uploads/', default='profile_pics/default.jpg')
+    foto = models.ImageField(max_length=255, blank=True, null=True, default='profile_pics/default.jpg')
 
     def __str__(self):
         return self.nama_lengkap  # Display nama_lengkap when object is called

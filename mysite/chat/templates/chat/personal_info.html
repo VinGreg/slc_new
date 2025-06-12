@@ -61,8 +61,8 @@
                 <div class="w-full sm:w-3/4 px-4 text-white pl-12 sm:pl-0">
                     <!-- Profile Section -->
                     <div class="flex flex-col sm:flex-row items-center sm:items-start mb-6 gap-4">
-                        {% if user_profile.foto %}
-                            <img src="{{ user_profile.foto.url }}" alt="Profile Photo" class="rounded-full w-24 h-24 shadow-lg border-4 border-blue-500 transition-transform duration-300 hover:scale-105">
+                        {% if user.user_photo %}
+                            <img src="data:image/jpeg;base64,{{ user.get_user_photo_from_mongo }}" alt="Profile Photo" class="rounded-full w-24 h-24 shadow-lg border-4 border-blue-500 transition-transform duration-300 hover:scale-105">
                         {% else %}
                             <img src="/media/profile_pics/default.jpg" class="rounded-full w-24 h-24 shadow-lg border-4 border-gray-600 transition-transform duration-300 hover:scale-105">
                         {% endif %}
