@@ -95,16 +95,16 @@ CHANNEL_LAYERS = {
 DATABASES = {
     'default': {
         'ENGINE': 'djongo',
-        'NAME': 'ta_slc',  
+        'NAME': '',  
         'ENFORCE_SCHEMA': True,
         'CLIENT': {
-            'host': 'mongodb+srv://myAtlasDBUser:Vincent2002@myatlasclusteredu.jzsh9rx.mongodb.net/?retryWrites=true&w=majority&appName=myAtlasClusterEDU',
+            'host': '',
             'authMechanism': 'SCRAM-SHA-1',
         }
     }
 }
-MONGO_DB_NAME = 'ta_slc'
-MONGO_URI = "mongodb+srv://myAtlasDBUser:Vincent2002@myatlasclusteredu.jzsh9rx.mongodb.net/?retryWrites=true&w=majority&appName=myAtlasClusterEDU"
+MONGO_DB_NAME = ''
+MONGO_URI = ""
 
 
 # recording
